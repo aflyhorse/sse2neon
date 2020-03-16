@@ -142,6 +142,7 @@
 
 typedef float32x4_t __m128;
 typedef int32x4_t __m128i;
+typedef float64x2_t __m128d;
 
 
 // ******************************************
@@ -1680,11 +1681,6 @@ FORCE_INLINE void _mm_clflush(void const*p)
 	// no corollary for Neon?
 }
 
-#if defined(__GNUC__) || defined(__clang__)
-#	pragma pop_macro("ALIGN_STRUCT")
-#	pragma pop_macro("FORCE_INLINE")
-#endif
-
 FORCE_INLINE __m128d  _mm_set_pd (double e1, double e0) {
      float64_t __attribute__((aligned(16))) data[2] = {e0,e1};
      return  vld1q_f64(data);
@@ -1702,7 +1698,7 @@ FORCE_INLINE uint64_t _mm_popcnt_u64(uint64_t x) {
     count16x4_val = vpaddl_u8(count8x8_val);
     count32x2_val = vpaddl_u16(count16x4_val);
     count64x1_val = vpaddl_u32(count32x2_val);
-    vst1_u64(count, count64x1_val);
+    vst1_u64(&count, count64x1_val);
     return count;
 }
 
@@ -1776,7 +1772,9 @@ FORCE_INLINE int _mm_popcnt_u32(uint32_t a)
 
 FORCE_INLINE __m128i _mm_sll_epi64(__m128i a, __m128i b)
 {
-    int64_t value = vget_low_s64(vreinterpretq_s64_m128i(b));
+    int64_t value;
+    int64x1_t value_64x1 = vget_low_s64(vreinterpretq_s64_m128i(b));
+    vst1_s64(&value, value_64x1);
 
     if (value <= 0) {
         return a;
@@ -1812,4 +1810,9 @@ FORCE_INLINE __m128i _mm_cmpeq_epi64 (__m128i a, __m128i b)
 	ret; \
 })
 
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#	pragma pop_macro("ALIGN_STRUCT")
+#	pragma pop_macro("FORCE_INLINE")
 #endif
